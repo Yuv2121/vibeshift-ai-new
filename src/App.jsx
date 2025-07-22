@@ -1,18 +1,35 @@
 import { motion } from 'framer-motion';
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import WaveSurfer from 'wavesurfer.js';
 
 function App() {
+  const waveformRef = useRef(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [waveSurfer, setWaveSurfer] = useState(null);
+
   useEffect(() => {
-    const waveform = WaveSurfer.create({
-      container: '#waveform',
+    const ws = WaveSurfer.create({
+      container: waveformRef.current,
       waveColor: '#00f',
       progressColor: '#0ff',
       height: 100,
     });
-    waveform.load('https://www.mfiles.co.uk/mp3-downloads/gs-cd-track2.mp3'); // Sample audio
-    return () => waveform.destroy();
+    ws.load('https://www.mfiles.co.uk/mp3-downloads/gs-cd-track2.mp3');
+    setWaveSurfer(ws);
+
+    return () => ws.destroy();
   }, []);
+
+  const togglePlayPause = () => {
+    if (waveSurfer) {
+      if (isPlaying) {
+        waveSurfer.pause();
+      } else {
+        waveSurfer.play();
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center flex-col">
@@ -24,7 +41,13 @@ function App() {
       >
         VibeShift AI
       </motion.h1>
-      <div id="waveform" style={{ width: '80%', marginTop: '20px' }}></div>
+      <div id="waveform" ref={waveformRef} style={{ width: '80%', marginTop: '20px' }}></div>
+      <button
+        onClick={togglePlayPause}
+        className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700"
+      >
+        {isPlaying ? 'Pause' : 'Play'}
+      </button>
     </div>
   );
 }
