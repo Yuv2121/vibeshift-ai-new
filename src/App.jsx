@@ -10,20 +10,25 @@ function App() {
   const [waveSurfer1, setWaveSurfer1] = useState(null);
   const [waveSurfer2, setWaveSurfer2] = useState(null);
   const [selectedVibe, setSelectedVibe] = useState('emotional');
-
-  const vibes = [
-    { id: 'emotional', label: 'Emotional' },
-    { id: 'party', label: 'Party' },
-  ];
+  const [vibeData, setVibeData] = useState({ original: '', transformed: '' });
 
   useEffect(() => {
+    // Fetch vibes.json from the public directory
+    fetch(process.env.PUBLIC_URL + '/vibes.json')
+      .then((res) => res.json())
+      .then((data) => {
+        const vibe = data.vibes.find((v) => v.id === selectedVibe);
+        setVibeData(vibe || data.vibes[0]);
+      })
+      .catch((err) => console.error('Error loading vibes.json:', err));
+
     const ws1 = WaveSurfer.create({
       container: waveformRef1.current,
       waveColor: '#00f',
       progressColor: '#0ff',
       height: 100,
     });
-    ws1.load('https://www.mfiles.co.uk/mp3-downloads/gs-cd-track2.mp3');
+    ws1.load(vibeData.original);
     setWaveSurfer1(ws1);
 
     const ws2 = WaveSurfer.create({
@@ -32,22 +37,14 @@ function App() {
       progressColor: '#f0f',
       height: 100,
     });
-    ws2.load(getTransformedAudio(selectedVibe));
+    ws2.load(vibeData.transformed);
     setWaveSurfer2(ws2);
 
     return () => {
       ws1.destroy();
       ws2.destroy();
     };
-  }, [selectedVibe]);
-
-  const getTransformedAudio = (vibe) => {
-    const vibeData = {
-      emotional: 'https://www.mfiles.co.uk/mp3-downloads/gs-cd-track1.mp3',
-      party: 'https://www.mfiles.co.uk/mp3-downloads/gs-cd-track3.mp3',
-    };
-    return vibeData[vibe] || 'https://www.mfiles.co.uk/mp3-downloads/gs-cd-track1.mp3';
-  };
+  }, [selectedVibe, vibeData]);
 
   const togglePlayPause1 = () => {
     if (waveSurfer1) {
@@ -102,9 +99,9 @@ function App() {
         onChange={(e) => setSelectedVibe(e.target.value)}
         className="mt-4 px-4 py-2 bg-gray-700 text-white rounded"
       >
-        {vibes.map((vibe) => (
-          <option key={vibe.id} value={vibe.id}>
-            {vibe.label}
+        {['emotional', 'party'].map((vibe) => (
+          <option key={vibe} value={vibe}>
+            {vibe.charAt(0).toUpperCase() + vibe.slice(1)}
           </option>
         ))}
       </select>
